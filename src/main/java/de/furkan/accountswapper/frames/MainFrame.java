@@ -155,6 +155,7 @@ public class MainFrame extends JFrame {
                       "Save Account",
                       JOptionPane.PLAIN_MESSAGE);
               if (name == null) {
+                  Main.isOperating = false;
                 return;
               }
               if (name.isEmpty()) {
@@ -163,6 +164,7 @@ public class MainFrame extends JFrame {
                     "The name of the account can't be empty!",
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
+                  Main.isOperating = false;
                 return;
               }
               if (Main.accountData.containsKey(name)) {
@@ -171,6 +173,7 @@ public class MainFrame extends JFrame {
                     "The name of the account is already in use!",
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
+                  Main.isOperating = false;
                 return;
               }
               String randomKey = String.valueOf(ThreadLocalRandom.current().nextInt(0, 10000));
@@ -180,6 +183,7 @@ public class MainFrame extends JFrame {
                     "An error occurred while saving the account!",
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
+                  Main.isOperating = false;
                 return;
               }
 
@@ -328,14 +332,20 @@ public class MainFrame extends JFrame {
 
     howToUseButton.create(false, false);
 
+
+    String howToUse =
+            "If you are already logged in into the riot client you can hit 'Save current account' to save your current account. (If not login with any account)\n" +
+            "If you want to add another account you need to logout first by clicking on the 'Logout' button in the corner of this application. (DO NOT USE THE SIGN OUT FUNCTION FROM THE RIOT CLIENT)\n" +
+            "After that you can login to the other account and hit 'Save current account' again to save it.\n" +
+            "Repeat this process until you have saved all accounts you want to save.\n";
+
     howToUseButton
         .getComponent()
         .addActionListener(
             e -> {
               JOptionPane.showMessageDialog(
                   this,
-                  "To save an account you need to be already logged in to an account in the Riot Client.\nAfter that you can click 'Save current Account' and pick a name for the Account to save it.\nIf you want to save another account you need to logout and login to the other account.\nTo do that do NOT use the 'Sign out' function from the Riot Client you should instead use the 'Logout' button in the corner.\nThe Riot Client will restart and you can login and save another account.\nDo this with all accounts you want to save in this application\n\nUsing the sign out function from the Client itself can cause a regeneration of the login token\nand some of your saved accounts may not work when swapping.\n\nAlso make sure while logging in having the 'Stay signed in' checkbox checked.",
-                  "How to use",
+                      howToUse,"How to use",
                   JOptionPane.INFORMATION_MESSAGE);
             });
 
