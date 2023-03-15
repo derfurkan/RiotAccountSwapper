@@ -3,6 +3,7 @@ package de.furkan.accountswapper.util;
 import com.google.gson.Gson;
 import de.furkan.accountswapper.Main;
 import java.io.*;
+import java.nio.charset.Charset;
 import javax.swing.*;
 import org.apache.commons.io.FileUtils;
 
@@ -10,7 +11,7 @@ public class RiotClientUtil {
 
   public final Gson gson = new Gson();
 
-  private final File riotClientDataPath;
+  public final File riotClientDataPath;
 
   public RiotClientUtil(File riotClientDataPath) {
     this.riotClientDataPath = riotClientDataPath;
@@ -20,11 +21,24 @@ public class RiotClientUtil {
     }
   }
 
+  public boolean isLoggedIn() {
+    try {
+      return new File(riotClientDataPath + "\\Data\\RiotGamesPrivateSettings.yaml").exists()
+          && FileUtils.readLines(
+                      new File(riotClientDataPath + "\\Data\\RiotGamesPrivateSettings.yaml"),
+                      Charset.defaultCharset())
+                  .size()
+              > 16;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public void clearRiotData() {
     Main.printConsole("Clearing Riot Client Data...");
     try {
       FileUtils.cleanDirectory(riotClientDataPath);
-      Thread.sleep(2000);
+      Thread.sleep(100);
     } catch (Exception e) {
       JOptionPane.showMessageDialog(
           null,
@@ -58,7 +72,7 @@ public class RiotClientUtil {
     }
     Main.printConsole("Killed Riot Client!");
     try {
-      Thread.sleep(1000);
+      Thread.sleep(500);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
@@ -69,14 +83,14 @@ public class RiotClientUtil {
     File riotClientPath = new File("C:\\Riot Games\\Riot Client\\RiotClientServices.exe");
     ProcessBuilder pb = new ProcessBuilder(riotClientPath.getAbsolutePath());
     try {
-      Thread.sleep(2000);
+      Thread.sleep(200);
       pb.start();
     } catch (Exception e) {
       JOptionPane.showMessageDialog(
-              null,
-              "Could not start Riot Client!\n\n" + e.getMessage(),
-              "Error",
-              JOptionPane.ERROR_MESSAGE);
+          null,
+          "Could not start Riot Client!\n\n" + e.getMessage(),
+          "Error",
+          JOptionPane.ERROR_MESSAGE);
       throw new RuntimeException(e);
     }
     Main.printConsole("Started Riot Client!");
@@ -109,14 +123,8 @@ public class RiotClientUtil {
   }
 
   public void loadAccountDataFromKey(String key) {
-    killRiotClient();
     Main.printConsole("Loading account data from key " + key + "...");
-    // Clear data folder
-    clearRiotData();
-
-    // Copy files and folders from account folder to Riot Client Data
     try {
-
       for (File file :
           new File(Main.configFile.getParentFile().getAbsolutePath() + "\\" + key).listFiles()) {
         FileUtils.copyToDirectory(file, riotClientDataPath);
@@ -130,8 +138,5 @@ public class RiotClientUtil {
       throw new RuntimeException(e);
     }
     Main.printConsole("Loaded account data from key " + key + "!");
-    // Start Riot Client
-
-    startRiotClient();
   }
 }

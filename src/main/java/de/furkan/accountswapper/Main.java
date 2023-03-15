@@ -3,14 +3,16 @@ package de.furkan.accountswapper;
 import com.google.gson.JsonObject;
 import de.furkan.accountswapper.frames.MainFrame;
 import de.furkan.accountswapper.util.RiotClientUtil;
-import java.awt.*;
+import org.apache.commons.io.FileUtils;
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.ArrayList;import java.util.Date;
+import java.util.HashMap;import java.util.List;
 import javax.swing.*;
 
 public class Main {
+
+  public static final String VERSION = "1.2";
 
   public static final File configFile =
       new File(System.getenv("LOCALAPPDATA") + "/RiotAccountSwapper/config.json");
@@ -18,22 +20,17 @@ public class Main {
 
   public static HashMap<String, String> accountData = new HashMap<>();
 
+  public static boolean isOperating = false;
+
   public static void main(String[] args) {
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     } catch (ClassNotFoundException
-             | InstantiationException
-             | IllegalAccessException
-             | UnsupportedLookAndFeelException e) {
+        | InstantiationException
+        | IllegalAccessException
+        | UnsupportedLookAndFeelException e) {
       throw new RuntimeException(e);
     }
-    JOptionPane.showMessageDialog(
-        null,
-        "Riot Account Swapper by Furkan.#4554\n\nThis program is not affiliated with Riot Games in any way.\n"
-            + "Riot Games, League of Legends and all associated logos and designs are trademarks or registered trademarks of Riot Games, Inc.\n"
-            + "League of Legends \u00a9 Riot Games, Inc.",
-        "Disclaimer",
-        JOptionPane.INFORMATION_MESSAGE);
     riotClientUtil =
         new RiotClientUtil(new File(System.getenv("LOCALAPPDATA") + "/Riot Games/Riot Client"));
     if (!configFile.exists()) {
@@ -114,7 +111,7 @@ public class Main {
 
       printConsole("Ready to use!");
     }
-
+    new LoginWatcher();
     new MainFrame();
   }
 
@@ -160,5 +157,55 @@ public class Main {
   public static void printConsole(String message) {
     System.out.println(
         "[" + new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(new Date()) + "] " + message);
+  }
+}
+
+class LoginWatcher implements Runnable {
+
+  public LoginWatcher() {
+    new Thread(this).start();
+  }
+
+  @Override
+  public void run() {
+
+    while (true) {
+      try {
+        Thread.sleep(1000);
+
+        if(Main.isOperating) continue;
+        if(Main.riotClientUtil.isLoggedIn()) {
+          List<String> list =
+              FileUtils.readLines(
+                  new File(
+                      Main.riotClientUtil.riotClientDataPath
+                          + "\\Data\\RiotGamesPrivateSettings.yaml"));
+          FileUtils.deleteQuietly(
+              new File(
+                  Main.riotClientUtil.riotClientDataPath
+                      + "\\Data\\RiotGamesPrivateSettings.yaml"));
+          List<String> newList = new ArrayList<>();
+            for(String line : list) {
+            if (line.contains("region:")) {
+              line = "        region: \""+MainFrame.regionSelection.getSelected()+"\"";
+              }
+              newList.add(line);
+            }
+          new File(Main.riotClientUtil.riotClientDataPath + "\\Data\\RiotGamesPrivateSettings.yaml")
+              .createNewFile();
+            FileUtils.writeLines(new File(Main.riotClientUtil.riotClientDataPath + "\\Data\\RiotGamesPrivateSettings.yaml"), newList);
+        }
+      } catch (Exception e) {
+
+        JOptionPane.showMessageDialog(
+            null,
+            "Could not watch for login!\n\n" + e.getMessage(),
+            "Error",
+            JOptionPane.ERROR_MESSAGE);
+        e.printStackTrace();
+        System.exit(0);
+      }
+    }
+
   }
 }
